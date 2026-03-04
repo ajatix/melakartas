@@ -36,6 +36,9 @@
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       buildReverb();
     }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
     return audioContext;
   }
 
@@ -74,26 +77,35 @@
   function playNote(keyIndex, durationSeconds, onKeyLit, octave) {
     if (octave == null) octave = 4;
     const ctx = ensureAudio();
-    const freq = getFrequencyForKeyIndex(keyIndex, octave);
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const reverbAmt = getReverbAmount();
-    osc.connect(gain);
-    if (dryGainNode) {
-      gain.connect(dryGainNode);
-      if (reverbConvolver) gain.connect(reverbConvolver);
-      dryGainNode.gain.setValueAtTime(1 - reverbAmt, ctx.currentTime);
-      if (reverbGainNode) reverbGainNode.gain.setValueAtTime(reverbAmt, ctx.currentTime);
-    } else {
-      gain.connect(ctx.destination);
+
+    function schedulePlay() {
+      const freq = getFrequencyForKeyIndex(keyIndex, octave);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const reverbAmt = getReverbAmount();
+      osc.connect(gain);
+      if (dryGainNode) {
+        gain.connect(dryGainNode);
+        if (reverbConvolver) gain.connect(reverbConvolver);
+        dryGainNode.gain.setValueAtTime(1 - reverbAmt, ctx.currentTime);
+        if (reverbGainNode) reverbGainNode.gain.setValueAtTime(reverbAmt, ctx.currentTime);
+      } else {
+        gain.connect(ctx.destination);
+      }
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + durationSeconds);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + durationSeconds);
+      if (typeof onKeyLit === 'function') onKeyLit(keyIndex, durationSeconds);
     }
-    osc.frequency.value = freq;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + durationSeconds);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + durationSeconds);
-    if (typeof onKeyLit === 'function') onKeyLit(keyIndex, durationSeconds);
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(schedulePlay);
+    } else {
+      schedulePlay();
+    }
   }
 
   function setKeyPlaying(keyIndex, durationMs, octave) {
