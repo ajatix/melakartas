@@ -329,27 +329,29 @@
 
   (function initAudioUnlock() {
     var overlay = document.getElementById('audioUnlockOverlay');
+    var unlockBtn = document.getElementById('audioUnlockBtn');
     if (!overlay) return;
     var done = false;
     function unlockAndHide() {
       if (done) return;
       done = true;
       var ctx = ensureAudio();
-      ctx.resume().then(function () {
-        overlay.classList.add('audio-unlock-overlay--hidden');
-        overlay.setAttribute('aria-hidden', 'true');
-      }).catch(function () {
-        done = false;
-      });
+      ctx.resume();
+      overlay.classList.add('audio-unlock-overlay--hidden');
+      overlay.setAttribute('aria-hidden', 'true');
     }
-    overlay.addEventListener('touchstart', function (e) {
-      e.preventDefault();
+    function onTap(e) {
+      if (e) e.preventDefault();
       unlockAndHide();
-    }, { passive: false });
-    overlay.addEventListener('click', function (e) {
-      e.preventDefault();
-      unlockAndHide();
-    });
+    }
+    if (unlockBtn) {
+      unlockBtn.addEventListener('touchstart', onTap, { passive: false });
+      unlockBtn.addEventListener('touchend', onTap, { passive: false });
+      unlockBtn.addEventListener('click', onTap);
+    }
+    overlay.addEventListener('touchstart', onTap, { passive: false });
+    overlay.addEventListener('touchend', onTap, { passive: false });
+    overlay.addEventListener('click', onTap);
   })();
 
   document.getElementById('sidebarToggle').addEventListener('click', function () {
