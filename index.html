@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Melakartas in Carnatic Music</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>Melakartas in Carnatic Music</h1>
+      <button type="button" id="sidebarToggle" class="sidebar-toggle" aria-label="Open settings">⚙ Settings</button>
+    </header>
+
+    <div class="main-with-sidebar">
+      <main class="main-content">
+        <section class="dials-section">
+          <div class="clock-dials" aria-label="Raga selector dials">
+            <div class="dial dial-m">
+              <div class="dial-controls">
+                <button type="button" id="dialMUp" class="dial-btn dial-btn-up" aria-label="Increase M">▲</button>
+                <div class="dial-value-row">
+                  <span id="dialMValue" class="dial-value">M1</span>
+                </div>
+                <button type="button" id="dialMDown" class="dial-btn dial-btn-down" aria-label="Decrease M">▼</button>
+              </div>
+              <span class="dial-caption">Madhyamam</span>
+            </div>
+            <div class="dial dial-rg">
+              <div class="dial-controls">
+                <button type="button" id="dialRgUp" class="dial-btn dial-btn-up" aria-label="Increase R-G">▲</button>
+                <div class="dial-value-row">
+                  <span id="dialRgValue" class="dial-value">R1-G1</span>
+                </div>
+                <button type="button" id="dialRgDown" class="dial-btn dial-btn-down" aria-label="Decrease R-G">▼</button>
+              </div>
+              <span class="dial-caption dial-caption-two-lines"><span class="dial-caption-line">Rishabham</span><span class="dial-caption-line">Gandharam</span></span>
+            </div>
+            <div class="dial dial-dn">
+              <div class="dial-controls">
+                <button type="button" id="dialDnUp" class="dial-btn dial-btn-up" aria-label="Increase D-N">▲</button>
+                <span id="dialDnValue" class="dial-value">D1-N1</span>
+                <button type="button" id="dialDnDown" class="dial-btn dial-btn-down" aria-label="Decrease D-N">▼</button>
+              </div>
+              <span class="dial-caption dial-caption-two-lines"><span class="dial-caption-line">Dhaivatam</span><span class="dial-caption-line">Nishadam</span></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="piano-section">
+          <div class="piano-container">
+            <div id="piano" class="piano piano-labels-carnatic"></div>
+          </div>
+          <div class="play-buttons">
+            <button type="button" id="btnPlayAsc" aria-label="Play Arohanam">Arohanam</button>
+            <button type="button" id="btnPlayDesc" aria-label="Play Avarohanam">Avarohanam</button>
+          </div>
+        </section>
+
+        <section class="raga-description">
+          <div class="raga-info">
+            <div class="raga-number" id="ragaNumber">Raga 1</div>
+            <div class="raga-name" id="ragaName">Kanakangi</div>
+            <div class="raga-meta-row">
+              <span class="raga-meta-label">Chakra:</span>
+              <span class="raga-meta" id="ragaChakra"></span>
+            </div>
+            <div class="raga-scale-row raga-row-arohanam" id="ragaRowArohanam">
+              <span class="raga-scale-label">Arohanam:</span>
+              <span class="raga-scale" id="ragaArohanam">S R1 G1 M1 P D1 N1 Ṡ</span>
+            </div>
+            <div class="raga-scale-row raga-row-avarohanam" id="ragaRowAvarohanam">
+              <span class="raga-scale-label">Avarohanam:</span>
+              <span class="raga-scale" id="ragaAvarohanam">Ṡ N1 D1 P M1 G1 R1 S</span>
+            </div>
+            <div class="raga-scale-row raga-row-carnatic" id="ragaRowCarnatic">
+              <span class="raga-scale-label">Carnatic:</span>
+              <span class="raga-scale" id="ragaScale">S R1 G1 M1 P D1 N1</span>
+            </div>
+            <div class="raga-scale-row raga-row-western" id="ragaRowWestern">
+              <span class="raga-scale-label">Western:</span>
+              <span class="raga-scale raga-scale-western" id="ragaScaleWestern">C Db D F G Ab A</span>
+            </div>
+            <p class="raga-phrase" id="ragaPhrase"></p>
+            <div class="raga-meta-row">
+              <span class="raga-meta-label">Origin:</span>
+              <span class="raga-meta" id="ragaComposerYear"></span>
+            </div>
+            <div class="raga-meta-row">
+              <span class="raga-meta-label">Time of day:</span>
+              <span class="raga-meta" id="ragaTimeOfDay"></span>
+            </div>
+          </div>
+        </section>
+
+        <div class="nav-row nav-row-bottom">
+          <div class="nav-buttons">
+            <button type="button" id="btnPrev" aria-label="Previous raga">← Prev</button>
+            <button type="button" id="btnNext" aria-label="Next raga">Next →</button>
+            <button type="button" id="btnRandom" aria-label="Random raga">Random</button>
+          </div>
+          <div class="goto-raga">
+            <label for="gotoInput">Go to (1–72):</label>
+            <input type="number" id="gotoInput" min="1" max="72" value="1">
+            <button type="button" id="btnGoto">Go</button>
+          </div>
+        </div>
+      </main>
+
+      <div id="settingsOverlay" class="settings-overlay" aria-hidden="true">
+        <aside class="settings-panel" aria-label="Settings">
+          <div class="settings-panel-header">
+            <h2 class="sidebar-title">Settings</h2>
+            <button type="button" id="settingsClose" class="settings-close" aria-label="Close settings">×</button>
+          </div>
+          <div class="sidebar-content">
+          <div class="sidebar-group">
+            <label for="bpmInput">Tempo (BPM)</label>
+            <input type="number" id="bpmInput" min="40" max="240" value="80">
+          </div>
+          <div class="sidebar-group">
+            <label for="reverbInput">Reverb</label>
+            <input type="range" id="reverbInput" min="0" max="100" value="0" aria-label="Reverb amount">
+            <span id="reverbValue" class="reverb-value">0%</span>
+          </div>
+          <div class="sidebar-group">
+            <span class="sidebar-group-label">Piano Notes</span>
+            <div class="settings-radio-group" role="radiogroup" aria-label="Piano note labels">
+              <label class="settings-radio">
+                <input type="radio" name="pianoNotes" id="pianoNotesCarnatic" value="carnatic" checked>
+                Carnatic
+              </label>
+              <label class="settings-radio">
+                <input type="radio" name="pianoNotes" id="pianoNotesWestern" value="western">
+                Western
+              </label>
+            </div>
+          </div>
+        </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

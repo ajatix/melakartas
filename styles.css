@@ -1,0 +1,952 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-with-sidebar {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+}
+
+.main-content {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+  overflow: auto;
+}
+
+.dials-section {
+  flex: 0 0 auto;
+}
+
+.nav-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-row-bottom {
+  flex: 0 0 auto;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.piano-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.raga-description {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ——— Clock-style dials ——— */
+.clock-dials {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.dial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dial-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.dial-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 3rem;
+}
+
+.dial-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Dial buttons: transparent, only arrow visible; color from parent dial */
+.dial-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.35rem 0.5rem;
+  background: transparent;
+  color: inherit;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dial-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Dial M: blue */
+.dial-m {
+  --dial-color: #4a90d9;
+}
+.dial-m .dial-value,
+.dial-m .dial-caption,
+.dial-m .dial-btn {
+  color: var(--dial-color);
+}
+
+/* Dial R–G: green */
+.dial-rg {
+  --dial-color: #3d9d6b;
+}
+.dial-rg .dial-value,
+.dial-rg .dial-caption,
+.dial-rg .dial-btn {
+  color: var(--dial-color);
+}
+
+/* Dial D–N: purple */
+.dial-dn {
+  --dial-color: #9b59b6;
+}
+.dial-dn .dial-value,
+.dial-dn .dial-caption,
+.dial-dn .dial-btn {
+  color: var(--dial-color);
+}
+
+.dial-caption {
+  font-size: 0.7rem;
+  text-align: center;
+  margin-top: 0.15rem;
+}
+
+.dial-caption-two-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.35;
+}
+
+.dial-caption-two-lines .dial-caption-line {
+  display: block;
+}
+
+.header {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.sidebar-toggle {
+  padding: 0.4rem 0.75rem;
+  background: #0f3460;
+  color: #eee;
+  border: 1px solid #1a4a7a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.sidebar-toggle:hover {
+  background: #1a4a7a;
+}
+
+/* ——— Full-screen settings overlay ——— */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #16213e;
+  overflow: auto;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.settings-overlay.settings-overlay--open {
+  display: flex;
+}
+
+.settings-panel {
+  width: 100%;
+  max-width: 360px;
+  padding: 1.5rem;
+  background: #16213e;
+}
+
+.settings-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.settings-panel-header .sidebar-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.settings-close {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  background: #0f3460;
+  color: #eee;
+  border: 1px solid #1a4a7a;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-close:hover {
+  background: #1a4a7a;
+}
+
+/* ——— Collapsible sidebar (legacy, kept for content styles) ——— */
+.sidebar {
+  display: none;
+}
+
+.sidebar-content {
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebar-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e8f0;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sidebar-group label {
+  font-size: 0.875rem;
+  color: #aaa;
+}
+
+.sidebar-group input[type="number"] {
+  width: 100%;
+  max-width: 6rem;
+  padding: 0.4rem;
+  background: #0f0f1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #eee;
+  font-size: 0.9rem;
+}
+
+.sidebar-group input[type="range"] {
+  width: 100%;
+  accent-color: #4a9eff;
+}
+
+.sidebar-group .reverb-value {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.sidebar-group .sidebar-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #aaa;
+}
+
+.sidebar-group .sidebar-checkbox input {
+  margin: 0;
+}
+
+.sidebar-group-checkboxes {
+  gap: 0.5rem;
+}
+
+.sidebar-group-label {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 0.25rem;
+}
+
+.settings-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.settings-radio-group .settings-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.settings-radio-group .settings-radio input {
+  margin: 0;
+  accent-color: #4a9eff;
+}
+
+.sidebar-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #c0c8d0;
+  cursor: pointer;
+}
+
+.sidebar-checkbox input {
+  margin: 0;
+}
+
+/* Raga description rows: hide when checkbox unchecked */
+.raga-scale-row.raga-row-hidden {
+  display: none !important;
+}
+
+.top-section .raga-info {
+  padding: 0.35rem 0;
+}
+
+.split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.left-panel,
+.right-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.left-panel {
+  border-right: 1px solid #0f3460;
+}
+
+.right-panel {
+  min-width: 0;
+}
+
+.raga-info {
+  padding: 0.5rem 0;
+}
+
+.raga-number {
+  font-size: 0.875rem;
+  color: #888;
+}
+
+.raga-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.raga-scale {
+  font-size: 0.9rem;
+  color: #aaa;
+  font-family: ui-monospace, monospace;
+}
+
+.raga-scale-row {
+  margin-top: 0.2rem;
+}
+
+.raga-scale-label {
+  font-size: 0.8rem;
+  color: #888;
+  margin-right: 0.35rem;
+}
+
+.raga-scale-western {
+  color: #b8c8e0;
+}
+
+.raga-phrase {
+  margin: 0.6rem 0 0.4rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #b0b8c8;
+  font-style: italic;
+}
+
+.raga-meta-row {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.raga-meta-label {
+  color: #888;
+  margin-right: 0.35rem;
+}
+
+.raga-meta {
+  color: #a0a8b8;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-buttons button,
+.goto-raga button,
+.dial-btn {
+  padding: 0.5rem 0.75rem;
+  background: #0f3460;
+  color: #eee;
+  border: 1px solid #1a4a7a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.dial .dial-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+}
+
+.dial .dial-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-buttons button:hover,
+.goto-raga button:hover {
+  background: #1a4a7a;
+}
+
+.axis-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.axis-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.axis-row span:first-child,
+.m-toggle .axis-label {
+  min-width: 2.5rem;
+  font-size: 0.875rem;
+}
+.axis-row .axis-name {
+  min-width: 0;
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+.axis-nav button {
+  padding: 0.25rem 0.5rem;
+  min-width: 2rem;
+}
+
+.m-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.m-toggle .m-btn {
+  padding: 0.25rem 0.6rem;
+  min-width: 2.5rem;
+}
+
+.m-toggle .m-btn.active {
+  background: #1a4a7a;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
+.goto-raga {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.goto-raga label {
+  font-size: 0.875rem;
+}
+
+#gotoInput {
+  width: 4rem;
+  padding: 0.35rem;
+  background: #0f0f1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #eee;
+  font-size: 0.9rem;
+}
+
+/* ——— Piano: white keys in flow, black keys between (50% overlap each side) ——— */
+.piano-container {
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 200px;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0.5rem 0;
+}
+
+.piano {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  width: 100%;
+  position: relative;
+  background: #1a1a2e;
+  min-height: 180px;
+}
+
+/* White keys: equal flex so they share space; black keys sit between them */
+.piano-key.white {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 0.5rem 0.15rem 0.6rem;
+  border: 1px solid #333;
+  border-radius: 0 0 6px 6px;
+  cursor: default;
+  transition: background 0.15s, box-shadow 0.15s;
+  user-select: none;
+  height: 100%;
+  background: #f5f5f5;
+  color: #222;
+  z-index: 0;
+  margin-right: 1px;
+  border-right: 1px solid #999;
+}
+
+.piano-key.white:last-of-type {
+  margin-right: 0;
+}
+
+/* Black keys: narrower with gap between, opaque; centered between white keys */
+.piano-key.black {
+  position: absolute;
+  width: 10%;
+  height: 62%;
+  top: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 0.5rem 0.15rem 0.6rem;
+  border: 1px solid #333;
+  border-radius: 0 0 6px 6px;
+  cursor: default;
+  transition: background 0.15s, box-shadow 0.15s;
+  user-select: none;
+  background: #2a2a2a;
+  color: #ddd;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+/* Centered between white keys with 2% gap each side: left = boundary - half width - 1% */
+.piano-key.black[data-black-index="1"] { left: 6.5%; }
+.piano-key.black[data-black-index="2"] { left: 19%; }
+.piano-key.black[data-black-index="3"] { left: 44%; }
+.piano-key.black[data-black-index="4"] { left: 56.5%; }
+.piano-key.black[data-black-index="5"] { left: 69%; }
+
+/* Key labels at bottom of key: left = Carnatic, right = Western */
+.piano-key .key-labels {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  width: 100%;
+  min-width: 0;
+  padding: 0.2rem 0.25rem 0.25rem;
+  overflow: hidden;
+  gap: 0.25rem;
+}
+
+/* Single system: show one label centered */
+#piano.piano-labels-carnatic .piano-key .key-labels {
+  justify-content: center;
+}
+
+#piano.piano-labels-carnatic .piano-key .western {
+  display: none;
+}
+
+#piano.piano-labels-carnatic .piano-key .carnatic {
+  text-align: center;
+}
+
+#piano.piano-labels-western .piano-key .key-labels {
+  justify-content: center;
+}
+
+#piano.piano-labels-western .piano-key .carnatic {
+  display: none;
+}
+
+#piano.piano-labels-western .piano-key .western {
+  text-align: center;
+}
+
+.piano-key .carnatic {
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  min-width: 0;
+  text-align: left;
+  flex: 0 1 auto;
+}
+
+.piano-key .western {
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  opacity: 0.95;
+  letter-spacing: 0.02em;
+  min-width: 0;
+  text-align: right;
+  flex: 0 1 auto;
+}
+
+.piano-key.white.upper-sa {
+  border-left: 2px solid #555;
+}
+
+.piano-key.white.upper-sa .carnatic {
+  font-size: 0.95rem;
+}
+
+.piano-key.white.upper-sa .western {
+  font-size: 0.8rem;
+}
+
+/* Black key labels */
+.piano-key.black .carnatic,
+.piano-key.black .western {
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.piano-key.highlighted {
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+/* Piano key colors matching dials: S & P = gold, R–G = green, M = blue, D–N = purple */
+.piano-key.highlighted.scale-s {
+  background: rgba(201, 162, 39, 0.35);
+  color: #1a1a2e;
+  border-color: #c9a227;
+  box-shadow: inset 0 0 0 2px #c9a227;
+}
+
+.piano-key.highlighted.scale-rg {
+  background: rgba(61, 157, 107, 0.35);
+  color: #0a1a12;
+  border-color: #3d9d6b;
+  box-shadow: inset 0 0 0 2px #3d9d6b;
+}
+
+.piano-key.highlighted.scale-m {
+  background: rgba(74, 144, 217, 0.35);
+  color: #0a1629;
+  border-color: #4a90d9;
+  box-shadow: inset 0 0 0 2px #4a90d9;
+}
+
+.piano-key.highlighted.scale-p {
+  background: rgba(201, 162, 39, 0.35);
+  color: #1a1a2e;
+  border-color: #c9a227;
+  box-shadow: inset 0 0 0 2px #c9a227;
+}
+
+.piano-key.highlighted.scale-dn {
+  background: rgba(155, 89, 182, 0.35);
+  color: #1a0a22;
+  border-color: #9b59b6;
+  box-shadow: inset 0 0 0 2px #9b59b6;
+}
+
+.piano-key.black.highlighted.scale-s {
+  background: rgb(201, 162, 39);
+  color: #1a1a2e;
+  box-shadow: inset 0 0 0 2px #c9a227;
+}
+
+.piano-key.black.highlighted.scale-rg {
+  background: rgb(61, 157, 107);
+  color: #0a1a12;
+  box-shadow: inset 0 0 0 2px #3d9d6b;
+}
+
+.piano-key.black.highlighted.scale-m {
+  background: rgb(74, 144, 217);
+  color: #0a1629;
+  box-shadow: inset 0 0 0 2px #4a90d9;
+}
+
+.piano-key.black.highlighted.scale-p {
+  background: rgb(201, 162, 39);
+  color: #1a1a2e;
+  box-shadow: inset 0 0 0 2px #c9a227;
+}
+
+.piano-key.black.highlighted.scale-dn {
+  background: rgb(155, 89, 182);
+  color: #1a0a22;
+  box-shadow: inset 0 0 0 2px #9b59b6;
+}
+
+.piano-key.dimmed {
+  pointer-events: none;
+}
+
+.piano-key:not(.dimmed).white {
+  cursor: pointer;
+}
+
+.piano-key:not(.dimmed).black {
+  cursor: pointer;
+}
+
+.piano-key:not(.dimmed):active,
+.piano-key:not(.dimmed).highlighted:hover {
+  filter: brightness(0.95);
+}
+
+/* Playing state: brighter shade of the key's scale color; white keys z-index 1, black z-index 2 */
+.piano-key.playing {
+  z-index: 1;
+}
+
+.piano-key.playing.scale-s {
+  background: #ffec99 !important;
+  box-shadow: 0 0 12px 2px #c9a227, inset 0 0 8px rgba(201, 162, 39, 0.5);
+  color: #1a1a2e;
+}
+
+.piano-key.playing.scale-rg {
+  background: #8dd9b3 !important;
+  box-shadow: 0 0 12px 2px #3d9d6b, inset 0 0 8px rgba(61, 157, 107, 0.5);
+  color: #0a1a12;
+}
+
+.piano-key.playing.scale-m {
+  background: #8fc9f5 !important;
+  box-shadow: 0 0 12px 2px #4a90d9, inset 0 0 8px rgba(74, 144, 217, 0.5);
+  color: #0a1629;
+}
+
+.piano-key.playing.scale-p {
+  background: #ffec99 !important;
+  box-shadow: 0 0 12px 2px #c9a227, inset 0 0 8px rgba(201, 162, 39, 0.5);
+  color: #1a1a2e;
+}
+
+.piano-key.playing.scale-dn {
+  background: #c9a8e8 !important;
+  box-shadow: 0 0 12px 2px #9b59b6, inset 0 0 8px rgba(155, 89, 182, 0.5);
+  color: #1a0a22;
+}
+
+.piano-key.black.playing {
+  z-index: 2;
+}
+
+.piano-key.black.playing.scale-s {
+  background: #e8c84d !important;
+  box-shadow: 0 0 10px 2px #c9a227, inset 0 0 6px rgba(201, 162, 39, 0.5);
+  color: #1a1a2e;
+}
+
+.piano-key.black.playing.scale-rg {
+  background: #4dc078 !important;
+  box-shadow: 0 0 10px 2px #3d9d6b, inset 0 0 6px rgba(61, 157, 107, 0.5);
+  color: #0a1a12;
+}
+
+.piano-key.black.playing.scale-m {
+  background: #5ba8f0 !important;
+  box-shadow: 0 0 10px 2px #4a90d9, inset 0 0 6px rgba(74, 144, 217, 0.5);
+  color: #0a1629;
+}
+
+.piano-key.black.playing.scale-p {
+  background: #e8c84d !important;
+  box-shadow: 0 0 10px 2px #c9a227, inset 0 0 6px rgba(201, 162, 39, 0.5);
+  color: #1a1a2e;
+}
+
+.piano-key.black.playing.scale-dn {
+  background: #b87dd4 !important;
+  box-shadow: 0 0 10px 2px #9b59b6, inset 0 0 6px rgba(155, 89, 182, 0.5);
+  color: #1a0a22;
+}
+
+/* Scale playback */
+.scale-playback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tempo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tempo-row label {
+  font-size: 0.9rem;
+}
+
+.reverb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reverb-row label {
+  font-size: 0.9rem;
+}
+
+#reverbInput {
+  width: 8rem;
+  accent-color: #4a9eff;
+}
+
+.reverb-value {
+  font-size: 0.9rem;
+  color: #aaa;
+  min-width: 2.5rem;
+}
+
+#bpmInput {
+  width: 4rem;
+  padding: 0.4rem;
+  background: #0f0f1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #eee;
+  font-size: 0.9rem;
+}
+
+.play-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.play-buttons button {
+  padding: 0.5rem 1rem;
+  background: #0f3460;
+  color: #eee;
+  border: 1px solid #1a4a7a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.play-buttons button:hover {
+  background: #1a4a7a;
+}
+
+.play-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .split {
+    flex-direction: column;
+  }
+
+  .left-panel {
+    border-right: none;
+    border-bottom: 1px solid #0f3460;
+  }
+}
