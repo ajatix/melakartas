@@ -8,6 +8,42 @@ body {
   background: #1a1a2e;
   color: #eee;
   min-height: 100vh;
+  touch-action: manipulation;
+}
+
+/* Full-screen overlay: tap to unlock Web Audio (required on iOS) */
+.audio-unlock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 26, 0.95);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.audio-unlock-overlay--hidden {
+  display: none;
+}
+
+.audio-unlock-content {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.audio-unlock-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #eee;
+  margin: 0 0 0.5rem;
+}
+
+.audio-unlock-hint {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin: 0;
 }
 
 .app {

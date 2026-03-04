@@ -327,6 +327,31 @@
   updatePianoHighlight();
   updateAxisDisplay();
 
+  (function initAudioUnlock() {
+    var overlay = document.getElementById('audioUnlockOverlay');
+    if (!overlay) return;
+    var done = false;
+    function unlockAndHide() {
+      if (done) return;
+      done = true;
+      var ctx = ensureAudio();
+      ctx.resume().then(function () {
+        overlay.classList.add('audio-unlock-overlay--hidden');
+        overlay.setAttribute('aria-hidden', 'true');
+      }).catch(function () {
+        done = false;
+      });
+    }
+    overlay.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      unlockAndHide();
+    }, { passive: false });
+    overlay.addEventListener('click', function (e) {
+      e.preventDefault();
+      unlockAndHide();
+    });
+  })();
+
   document.getElementById('sidebarToggle').addEventListener('click', function () {
     var overlay = document.getElementById('settingsOverlay');
     overlay.classList.add('settings-overlay--open');
