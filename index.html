@@ -56,10 +56,15 @@
 
         <section class="piano-section">
           <div class="piano-container">
-            <div id="piano" class="piano piano-labels-carnatic"></div>
+            <div id="piano" class="piano piano-labels-western"></div>
           </div>
           <div class="play-buttons">
             <button type="button" id="btnPlayAsc" aria-label="Play Arohanam">Arohanam</button>
+            <div class="play-transpose-control">
+              <button type="button" id="btnTransposePrev" class="transpose-arrow" aria-label="Previous transpose">◀</button>
+              <span id="transposeLabel" class="play-transpose-label" aria-live="polite">C</span>
+              <button type="button" id="btnTransposeNext" class="transpose-arrow" aria-label="Next transpose">▶</button>
+            </div>
             <button type="button" id="btnPlayDesc" aria-label="Play Avarohanam">Avarohanam</button>
           </div>
         </section>
@@ -133,16 +138,16 @@
             <span id="reverbValue" class="reverb-value">0%</span>
           </div>
           <div class="sidebar-group">
-            <span class="sidebar-group-label">Piano Notes</span>
-            <div class="settings-radio-group" role="radiogroup" aria-label="Piano note labels">
-              <label class="settings-radio">
-                <input type="radio" name="pianoNotes" id="pianoNotesCarnatic" value="carnatic" checked>
-                Carnatic
-              </label>
-              <label class="settings-radio">
-                <input type="radio" name="pianoNotes" id="pianoNotesWestern" value="western">
-                Western
-              </label>
+            <span class="sidebar-group-label">Transpose Starting Sa</span>
+            <div id="rootNoteGroup" class="root-note-group" role="radiogroup" aria-label="Transpose starting Sa (root)"></div>
+          </div>
+          <div class="sidebar-group">
+            <span class="sidebar-group-label">Instrument</span>
+            <div id="instrumentGroup" class="instrument-btn-group" role="group" aria-label="Instrument sound">
+              <button type="button" class="instrument-btn selected" data-instrument="piano" aria-label="Piano" title="Piano">🎹</button>
+              <button type="button" class="instrument-btn" data-instrument="guitar" aria-label="Guitar" title="Guitar">🎸</button>
+              <button type="button" class="instrument-btn" data-instrument="veena" aria-label="Veena" title="Veena">🎵</button>
+              <button type="button" class="instrument-btn" data-instrument="violin" aria-label="Violin" title="Violin">🎻</button>
             </div>
           </div>
         </div>

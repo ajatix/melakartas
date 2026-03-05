@@ -18,7 +18,8 @@ const SWARA_TO_KEY_INDEX = {
   N1: 9, N2: 10, N3: 11
 };
 
-// Key index to Carnatic label (for reference; piano labels come from raga scale)
+// Key index to Carnatic label (for reference; piano labels come from raga scale).
+// Also used as "Starting Sa" option labels when Carnatic piano notes are selected.
 const KEY_INDEX_TO_CARNATIC = [
   'S', 'R1', 'R2/G1', 'R3/G2', 'G3', 'M1', 'M2', 'P', 'D1', 'D2/N1', 'D3/N2', 'N3'
 ];

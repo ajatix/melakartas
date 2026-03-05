@@ -40,14 +40,32 @@
         reverbInput.value = String(rev);
         if (reverbValueEl) reverbValueEl.textContent = rev + '%';
       }
-      if (s.pianoNotes === 'western') {
-        var w = document.getElementById('pianoNotesWestern');
-        if (w) w.checked = true;
-      } else {
-        var c = document.getElementById('pianoNotesCarnatic');
-        if (c) c.checked = true;
+      if (s.rootNote != null) {
+        var r = Math.max(0, Math.min(11, parseInt(s.rootNote, 10) || 0));
+        setRootNote(r);
       }
+      if (s.instrument === 'guitar' || s.instrument === 'veena' || s.instrument === 'violin') {
+        var instBtn = document.querySelector('.instrument-btn[data-instrument="' + s.instrument + '"]');
+        if (instBtn) {
+          document.querySelectorAll('.instrument-btn').forEach(function (b) { b.classList.remove('selected'); });
+          instBtn.classList.add('selected');
+        }
+      } else if (s.instrument === 'sitar') {
+        var veenaBtn = document.querySelector('.instrument-btn[data-instrument="veena"]');
+        if (veenaBtn) {
+          document.querySelectorAll('.instrument-btn').forEach(function (b) { b.classList.remove('selected'); });
+          veenaBtn.classList.add('selected');
+        }
+      } else if (s.instrument === 'piano') {
+        var p = document.querySelector('.instrument-btn[data-instrument="piano"]');
+        if (p) {
+          document.querySelectorAll('.instrument-btn').forEach(function (b) { b.classList.remove('selected'); });
+          p.classList.add('selected');
+        }
+      }
+      updateTransposeLabel();
       updatePianoLabels();
+      updatePianoHighlight();
       updateRagaInfo();
     } catch (e) {}
   }
@@ -57,10 +75,35 @@
       var s = {
         bpm: bpmInput ? parseInt(bpmInput.value, 10) || 80 : 80,
         reverb: reverbInput ? parseInt(reverbInput.value, 10) || 0 : 0,
-        pianoNotes: document.getElementById('pianoNotesWestern') && document.getElementById('pianoNotesWestern').checked ? 'western' : 'carnatic'
+        rootNote: getRootNote(),
+        instrument: getInstrument()
       };
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
     } catch (e) {}
+  }
+
+  let rootNote = 0;
+
+  function getRootNote() {
+    return rootNote;
+  }
+
+  function setRootNote(value) {
+    var n = Math.max(0, Math.min(11, parseInt(value, 10) || 0));
+    rootNote = n;
+    var group = document.getElementById('rootNoteGroup');
+    if (group) {
+      group.querySelectorAll('.root-note-btn').forEach(function (btn) {
+        btn.classList.toggle('selected', parseInt(btn.dataset.root, 10) === n);
+      });
+    }
+    updateTransposeLabel();
+  }
+
+  function getInstrument() {
+    var btn = document.querySelector('.instrument-btn.selected');
+    var v = btn ? btn.dataset.instrument : 'piano';
+    return (v === 'guitar' || v === 'veena' || v === 'violin') ? v : 'piano';
   }
 
   let reverbConvolver = null;
@@ -114,31 +157,146 @@
     return Math.max(0, Math.min(1, parseInt(el.value, 10) / 100));
   }
 
-  function playNote(keyIndex, durationSeconds, onKeyLit, octave) {
-    if (octave == null) octave = 4;
-    const ctx = ensureAudio();
+  /**
+   * Schedule a single note with the selected instrument timbre.
+   * Connects to dry/reverb and runs at ctx.currentTime.
+   */
+  function scheduleInstrumentNote(ctx, freq, durationSeconds, instrument, reverbAmt) {
+    var now = ctx.currentTime;
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, now);
 
-    function schedulePlay() {
-      const freq = getFrequencyForKeyIndex(keyIndex, octave);
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const reverbAmt = getReverbAmount();
-      osc.connect(gain);
+    function connectToDestination(src) {
+      src.connect(gain);
       if (dryGainNode) {
         gain.connect(dryGainNode);
-        if (reverbConvolver) gain.connect(reverbConvolver);
-        dryGainNode.gain.setValueAtTime(1 - reverbAmt, ctx.currentTime);
-        if (reverbGainNode) reverbGainNode.gain.setValueAtTime(reverbAmt, ctx.currentTime);
+        if (reverbConvolver) src.connect(reverbConvolver);
+        dryGainNode.gain.setValueAtTime(1 - reverbAmt, now);
+        if (reverbGainNode) reverbGainNode.gain.setValueAtTime(reverbAmt, now);
       } else {
         gain.connect(ctx.destination);
       }
+    }
+
+    if (instrument === 'piano') {
+      var osc = ctx.createOscillator();
+      osc.type = 'triangle';
       osc.frequency.value = freq;
+      var osc2 = ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq * 2.5;
+      var gain2 = ctx.createGain();
+      gain2.gain.setValueAtTime(0.15, now);
+      osc.connect(gain);
+      osc2.connect(gain2);
+      gain2.connect(gain);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + durationSeconds * 0.9);
+      osc.start(now);
+      osc.stop(now + durationSeconds);
+      osc2.start(now);
+      osc2.stop(now + durationSeconds * 0.4);
+      connectToDestination(gain);
+      return;
+    }
+
+    if (instrument === 'guitar') {
+      var decay = Math.min(0.4, durationSeconds * 1.2);
+      var osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2000, now);
+      filter.frequency.exponentialRampToValueAtTime(400, now + decay * 0.3);
+      filter.Q.value = 2;
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + decay);
+      osc.connect(filter);
+      filter.connect(gain);
+      osc.start(now);
+      osc.stop(now + decay);
+      connectToDestination(gain);
+      return;
+    }
+
+    if (instrument === 'veena') {
+      var attack = 0.02;
+      var release = Math.min(0.8, durationSeconds * 1.5);
+      var osc = ctx.createOscillator();
       osc.type = 'sine';
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + durationSeconds);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + durationSeconds);
-      if (typeof onKeyLit === 'function') onKeyLit(keyIndex, durationSeconds);
+      osc.frequency.value = freq;
+      var osc2 = ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq * 0.5;
+      var gain2 = ctx.createGain();
+      gain2.gain.setValueAtTime(0.12, now);
+      osc.connect(gain);
+      osc2.connect(gain2);
+      gain2.connect(gain);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.22, now + attack);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + release);
+      osc.start(now);
+      osc.stop(now + release);
+      osc2.start(now);
+      osc2.stop(now + release);
+      connectToDestination(gain);
+      return;
+    }
+
+    if (instrument === 'violin') {
+      var attack = 0.05;
+      var release = Math.min(0.6, durationSeconds * 1.2);
+      var osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = freq;
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2800;
+      filter.Q.value = 1;
+      var vibrato = ctx.createOscillator();
+      vibrato.type = 'sine';
+      vibrato.frequency.value = 5;
+      vibrato.start(now);
+      vibrato.stop(now + release);
+      var vibGain = ctx.createGain();
+      vibGain.gain.value = freq * 0.008;
+      vibrato.connect(vibGain);
+      vibGain.connect(osc.frequency);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + attack);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + release);
+      osc.connect(filter);
+      filter.connect(gain);
+      osc.start(now);
+      osc.stop(now + release);
+      connectToDestination(gain);
+      return;
+    }
+
+    // fallback: piano-like sine
+    var osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + durationSeconds);
+    osc.connect(gain);
+    osc.start(now);
+    osc.stop(now + durationSeconds);
+    connectToDestination(gain);
+  }
+
+  function playNote(pitchIndex, durationSeconds, onKeyLit, octave) {
+    if (octave == null) octave = 4;
+    const ctx = ensureAudio();
+    const instrument = getInstrument();
+
+    function schedulePlay() {
+      const freq = getFrequencyForKeyIndex(pitchIndex, octave);
+      const reverbAmt = getReverbAmount();
+      scheduleInstrumentNote(ctx, freq, durationSeconds, instrument, reverbAmt);
+      if (typeof onKeyLit === 'function') onKeyLit(durationSeconds);
     }
 
     if (ctx.state === 'suspended') {
@@ -150,7 +308,7 @@
 
   function setKeyPlaying(keyIndex, durationMs, octave) {
     var sel = '.piano-key[data-key-index="' + keyIndex + '"]';
-    if (keyIndex === 12 || (octave === 5 && keyIndex === 0))
+    if (keyIndex === 12)
       sel = '.piano-key[data-upper-sa="1"]';
     var keyEl = pianoEl.querySelector(sel);
     if (!keyEl) return;
@@ -162,7 +320,6 @@
 
   function buildPiano() {
     pianoEl.innerHTML = '';
-    const isBlack = (i) => [1, 3, 6, 8, 10].indexOf(i) >= 0;
     const whiteOrder = [0, 2, 4, 5, 7, 9, 11, 12];
     const blackOrder = [1, 3, 6, 8, 10];
     const blackIndexMap = { 1: 1, 3: 2, 6: 3, 8: 4, 10: 5 };
@@ -188,30 +345,28 @@
     var raga = getCurrentRaga();
     var scale = raga.scale;
     var keyIndices = getKeyIndicesForScale(scale);
-    var westernNames = getWesternSpellingForKeyIndices(keyIndices);
-    var keyToCarnatic = {};
-    var keyToWestern = {};
-    for (var j = 0; j < keyIndices.length; j++) {
-      keyToCarnatic[keyIndices[j]] = scale[j];
-      keyToWestern[keyIndices[j]] = typeof westernNoteForDisplayHTML === 'function' ? westernNoteForDisplayHTML(westernNames[j]) : westernNames[j];
-    }
-    keyToCarnatic[12] = 'Ṡ';
-    keyToWestern[12] = "C'";
+    var root = getRootNote();
+    pianoEl.classList.add('piano-labels-western');
 
-    var useWestern = document.getElementById('pianoNotesWestern') && document.getElementById('pianoNotesWestern').checked;
-    pianoEl.classList.toggle('piano-labels-western', useWestern);
-    pianoEl.classList.toggle('piano-labels-carnatic', !useWestern);
+    var westernSharp = (typeof WESTERN_SHARP !== 'undefined') ? WESTERN_SHARP : ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
     var keys = pianoEl.querySelectorAll('.piano-key');
     keys.forEach(function (keyEl) {
       var upperSaKey = keyEl.dataset.upperSa === '1';
-      var idx = upperSaKey ? 12 : parseInt(keyEl.dataset.keyIndex, 10);
-      var inScale = upperSaKey || keyIndices.indexOf(idx) >= 0;
+      var keyIndex = upperSaKey ? 12 : parseInt(keyEl.dataset.keyIndex, 10);
+      var inScale = upperSaKey || keyIndices.indexOf(keyIndex) >= 0;
       var carnaticSpan = keyEl.querySelector('.carnatic');
       var westernSpan = keyEl.querySelector('.western');
       if (inScale) {
-        carnaticSpan.textContent = keyToCarnatic[idx] || '';
-        westernSpan.innerHTML = keyToWestern[idx] || '';
+        var scaleIdx = upperSaKey ? 7 : keyIndices.indexOf(keyIndex);
+        carnaticSpan.textContent = upperSaKey ? 'Ṡ' : (scale[scaleIdx] || '');
+        var transposedPitch = upperSaKey ? root : (keyIndex + root) % 12;
+        var westernName = westernSharp[transposedPitch];
+        if (upperSaKey) {
+          westernSpan.innerHTML = typeof westernNoteForDisplayHTML === 'function' ? westernNoteForDisplayHTML(westernName + "'") : westernName + "'";
+        } else {
+          westernSpan.innerHTML = typeof westernNoteForDisplayHTML === 'function' ? westernNoteForDisplayHTML(westernName) : westernName;
+        }
       } else {
         carnaticSpan.textContent = '';
         westernSpan.innerHTML = '';
@@ -222,15 +377,16 @@
   function updatePianoHighlight() {
     const raga = getCurrentRaga();
     const keyIndices = getKeyIndicesForScale(raga.scale);
+    var root = getRootNote();
     updatePianoLabels();
     const keys = pianoEl.querySelectorAll('.piano-key');
     keys.forEach((keyEl) => {
       var upperSaKey = keyEl.dataset.upperSa === '1';
-      var idx = upperSaKey ? 12 : parseInt(keyEl.dataset.keyIndex, 10);
-      var inScale = upperSaKey || keyIndices.indexOf(idx) >= 0;
+      var keyIndex = upperSaKey ? 12 : parseInt(keyEl.dataset.keyIndex, 10);
+      var inScale = upperSaKey || keyIndices.indexOf(keyIndex) >= 0;
       keyEl.classList.remove('scale-s', 'scale-rg', 'scale-m', 'scale-p', 'scale-dn');
       if (inScale) {
-        var scaleIndex = upperSaKey ? 7 : keyIndices.indexOf(idx);
+        var scaleIndex = upperSaKey ? 7 : keyIndices.indexOf(keyIndex);
         var scaleClass = scaleIndex === 0 || scaleIndex === 7 ? 'scale-s' : scaleIndex === 1 || scaleIndex === 2 ? 'scale-rg' : scaleIndex === 3 ? 'scale-m' : scaleIndex === 4 ? 'scale-p' : 'scale-dn';
         keyEl.classList.add(scaleClass);
       }
@@ -240,16 +396,15 @@
         keyEl.onclick = function () {
           ensureAudio();
           var dur = 0.3;
-          playNote(0, dur, function () { setKeyPlaying(12, dur * 1000, 5); }, 5);
+          playNote(root, dur, function () { setKeyPlaying(12, dur * 1000, 5); }, 5);
         };
       } else {
         keyEl.onclick = inScale ? function () {
           ensureAudio();
           var dur = 0.3;
-          var k = parseInt(keyEl.dataset.keyIndex, 10);
-          playNote(k, dur, function (keyIdx, d) {
-            setKeyPlaying(keyIdx, d * 1000);
-          });
+          var p = parseInt(keyEl.dataset.keyIndex, 10);
+          var transposedPitch = (p + root) % 12;
+          playNote(transposedPitch, dur, function () { setKeyPlaying(p, dur * 1000, 4); }, 4);
         } : null;
       }
     });
@@ -263,20 +418,13 @@
       var chakraIndex = raga.m * 6 + raga.rg;
       ragaChakraEl.textContent = CHAKRA_NAMES[chakraIndex] != null ? CHAKRA_NAMES[chakraIndex] : '';
     }
-    var useWestern = document.getElementById('pianoNotesWestern') && document.getElementById('pianoNotesWestern').checked;
     if (typeof getArohanamAvarohanam === 'function') {
       var aa = getArohanamAvarohanam(raga.scale);
       if (ragaArohanamEl) {
-        if (useWestern && typeof getWesternArohanamHTML === 'function')
-          ragaArohanamEl.innerHTML = getWesternArohanamHTML(raga.scale);
-        else
-          ragaArohanamEl.textContent = aa.arohanam.join(' ') + ' Ṡ';
+        ragaArohanamEl.textContent = aa.arohanam.join(' ') + ' Ṡ';
       }
       if (ragaAvarohanamEl) {
-        if (useWestern && typeof getWesternAvarohanamHTML === 'function')
-          ragaAvarohanamEl.innerHTML = getWesternAvarohanamHTML(raga.scale);
-        else
-          ragaAvarohanamEl.textContent = 'Ṡ ' + aa.avarohanam.join(' ');
+        ragaAvarohanamEl.textContent = 'Ṡ ' + aa.avarohanam.join(' ');
       }
     }
     var info = typeof getRagaInfo === 'function' ? getRagaInfo(raga.index) : null;
@@ -353,22 +501,30 @@
     const bpm = Math.max(40, Math.min(240, parseInt(bpmInput.value, 10) || 80));
     const noteDuration = 60 / bpm;
     const noteMs = noteDuration * 1000;
+    var root = getRootNote();
 
-    function playNext(idx) {
+    function playNext(idx, prevPitchIndex, prevOctave) {
       if (idx >= order.length) return;
       var keyIdx = order[idx];
       var isUpperSa = (ascending && idx === order.length - 1) || (!ascending && idx === 0);
+      var pitchIndex = (keyIdx + root) % 12;
       var octave = isUpperSa ? 5 : 4;
-      playNote(keyIdx, noteDuration * 0.9, function (k, d) {
-        setKeyPlaying(isUpperSa ? 12 : k, d * 1000, isUpperSa ? 5 : undefined);
+      if (ascending && prevPitchIndex != null && prevOctave != null) {
+        var prevMidi = prevOctave * 12 + prevPitchIndex;
+        var currMidi = octave * 12 + pitchIndex;
+        if (currMidi <= prevMidi) octave = 5;
+      }
+      var keyToHighlight = isUpperSa ? 12 : keyIdx;
+      playNote(pitchIndex, noteDuration * 0.9, function () {
+        setKeyPlaying(keyToHighlight, noteMs, octave);
       }, octave);
       scalePlaybackTimeout = setTimeout(function () {
-        playNext(idx + 1);
+        playNext(idx + 1, pitchIndex, octave);
       }, noteMs);
     }
 
     if (scalePlaybackTimeout) clearTimeout(scalePlaybackTimeout);
-    playNext(0);
+    playNext(0, null, null);
   }
 
   function stopScalePlayback() {
@@ -406,12 +562,46 @@
     });
   }
 
+  function updateTransposeLabel() {
+    if (typeof WESTERN_NOTES === 'undefined') return;
+    var root = getRootNote();
+    var note = WESTERN_NOTES[root] != null ? WESTERN_NOTES[root] : 'C';
+    var playEl = document.getElementById('transposeLabel');
+    if (playEl) playEl.textContent = note;
+  }
+
+  function buildRootNoteButtons() {
+    var group = document.getElementById('rootNoteGroup');
+    if (!group || group.querySelectorAll('.root-note-btn').length > 0) return;
+    if (typeof WESTERN_NOTES === 'undefined') return;
+    for (var i = 0; i < 12; i++) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'root-note-btn' + (i === 0 ? ' selected' : '');
+      btn.dataset.root = String(i);
+      btn.setAttribute('aria-label', 'Starting Sa: ' + (WESTERN_NOTES[i] || ''));
+      btn.textContent = WESTERN_NOTES[i] != null ? WESTERN_NOTES[i] : '';
+      (function (idx) {
+        btn.addEventListener('click', function () {
+          setRootNote(idx);
+          saveSettings();
+          updatePianoLabels();
+          updatePianoHighlight();
+        });
+      })(i);
+      group.appendChild(btn);
+    }
+  }
+
   // ——— Init ———
   buildPiano();
+  buildRootNoteButtons();
+  updateTransposeLabel();
   updateRagaInfo();
   updatePianoHighlight();
   updateAxisDisplay();
   loadSettings();
+  updateTransposeLabel();
   renderRagaList('');
   if (ragaSearchInput) {
     ragaSearchInput.addEventListener('input', function () {
@@ -507,20 +697,14 @@
     bpmInput.addEventListener('input', saveSettings);
   }
 
-  var pianoNotesWestern = document.getElementById('pianoNotesWestern');
-  var pianoNotesCarnatic = document.getElementById('pianoNotesCarnatic');
-  if (pianoNotesWestern) {
-    pianoNotesWestern.addEventListener('change', function () {
-      updatePianoLabels();
-      updateRagaInfo();
-      saveSettings();
-    });
-  }
-  if (pianoNotesCarnatic) {
-    pianoNotesCarnatic.addEventListener('change', function () {
-      updatePianoLabels();
-      updateRagaInfo();
-      saveSettings();
+  var instrumentGroup = document.getElementById('instrumentGroup');
+  if (instrumentGroup) {
+    instrumentGroup.querySelectorAll('.instrument-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        instrumentGroup.querySelectorAll('.instrument-btn').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        saveSettings();
+      });
     });
   }
 
@@ -532,6 +716,25 @@
     ensureAudio();
     playScale(false);
   });
+
+  var btnTransposePrev = document.getElementById('btnTransposePrev');
+  var btnTransposeNext = document.getElementById('btnTransposeNext');
+  if (btnTransposePrev) {
+    btnTransposePrev.addEventListener('click', function () {
+      setRootNote((getRootNote() + 11) % 12);
+      saveSettings();
+      updatePianoLabels();
+      updatePianoHighlight();
+    });
+  }
+  if (btnTransposeNext) {
+    btnTransposeNext.addEventListener('click', function () {
+      setRootNote((getRootNote() + 1) % 12);
+      saveSettings();
+      updatePianoLabels();
+      updatePianoHighlight();
+    });
+  }
 
   window.melakartaApp = {
     setRagaByCoords: setRagaByCoords,
