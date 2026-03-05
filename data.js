@@ -92,6 +92,14 @@ function westernNoteForDisplay(name) {
   return name.replace(/b/g, '\u1D47');
 }
 
+/** Return Western note as HTML with sharp '#' and flat 'b' in <sup> for display. */
+function westernNoteForDisplayHTML(name) {
+  if (!name) return name;
+  return name
+    .replace(/#/g, '<sup>#</sup>')
+    .replace(/b/g, '<sup>b</sup>');
+}
+
 /**
  * Return Western note names for the 7 key indices so each letter (C,D,E,F,G,A,B) appears exactly once.
  * Prefer sharp notation when it yields unique letters (e.g. C D# E F G A B).
@@ -126,6 +134,68 @@ function getWesternSpellingForKeyIndices(keyIndices) {
 function getWesternScaleString(scale) {
   const keyIndices = getKeyIndicesForScale(scale);
   return getWesternSpellingForKeyIndices(keyIndices).map(westernNoteForDisplay).join(' ');
+}
+
+/**
+ * Return a map from key index (0-11) to Western note name for this scale,
+ * using the same sharp/flat choices as arohanam (so avarohanam can reuse them).
+ */
+function getWesternSpellingMap(scale) {
+  if (!scale || !scale.length) return {};
+  const aa = getArohanamAvarohanam(scale);
+  const arohanamIndices = getKeyIndicesInOrder(aa.arohanam);
+  const names = getWesternSpellingForKeyIndices(arohanamIndices);
+  const map = {};
+  for (let i = 0; i < arohanamIndices.length; i++) {
+    map[arohanamIndices[i]] = names[i];
+  }
+  return map;
+}
+
+/**
+ * Return Western arohanam (ascending) with upper Sa as C'.
+ */
+function getWesternArohanamString(scale) {
+  if (!scale || !scale.length) return '';
+  const aa = getArohanamAvarohanam(scale);
+  const names = getWesternSpellingForKeyIndices(getKeyIndicesInOrder(aa.arohanam));
+  return names.map(westernNoteForDisplay).join(' ') + " C'";
+}
+
+/**
+ * Return Western arohanam as HTML with sharps and flats superscripted.
+ */
+function getWesternArohanamHTML(scale) {
+  if (!scale || !scale.length) return '';
+  const aa = getArohanamAvarohanam(scale);
+  const names = getWesternSpellingForKeyIndices(getKeyIndicesInOrder(aa.arohanam));
+  return names.map(westernNoteForDisplayHTML).join(' ') + " C'";
+}
+
+/**
+ * Return Western avarohanam (descending) with upper Sa as C'.
+ * Uses the same note spellings (flat vs sharp) as arohanam.
+ */
+function getWesternAvarohanamString(scale) {
+  if (!scale || !scale.length) return '';
+  const aa = getArohanamAvarohanam(scale);
+  const spellingMap = getWesternSpellingMap(scale);
+  const avarohanamIndices = getKeyIndicesInOrder(aa.avarohanam);
+  const names = avarohanamIndices.map(function (k) { return spellingMap[k] || ''; });
+  return "C' " + names.map(westernNoteForDisplay).join(' ');
+}
+
+/**
+ * Return Western avarohanam as HTML with sharps and flats superscripted.
+ * Uses the same note spellings (flat vs sharp) as arohanam.
+ */
+function getWesternAvarohanamHTML(scale) {
+  if (!scale || !scale.length) return '';
+  const aa = getArohanamAvarohanam(scale);
+  const spellingMap = getWesternSpellingMap(scale);
+  const avarohanamIndices = getKeyIndicesInOrder(aa.avarohanam);
+  const names = avarohanamIndices.map(function (k) { return spellingMap[k] || ''; });
+  return "C' " + names.map(westernNoteForDisplayHTML).join(' ');
 }
 
 /**
@@ -228,6 +298,33 @@ function ragaNumberFromCoords(rg, m, dn) {
   return m * 36 + rg * 6 + dn + 1;
 }
 
+// Hindustani and Western equivalents where commonly known. Index 1–72.
+// Sources: karnatik.com thaat table, Wikipedia (e.g. Chakravakam = Ahir Bhairav).
+const RAGA_EQUIVALENTS = {
+  2: { hindustani: 'Bairagi Bhairav (janya Revati)' },
+  8: { hindustani: 'Bhairavi (thaat) / Sindhu Bhairavi', western: 'Phrygian' },
+  10: { hindustani: 'Sindhu Bhairavi' },
+  14: { hindustani: 'Basant Mukhari / Vibhavari' },
+  15: { hindustani: 'Bhairav', western: 'Double harmonic major' },
+  16: { hindustani: 'Ahir Bhairav', western: 'Chromatic (C Db E F G A Bb)' },
+  17: { hindustani: 'Girija / Vasant / Saurastra Bhairav' },
+  20: { hindustani: 'Asavari (thaat) / Natabhairavi', western: 'Natural minor' },
+  21: { hindustani: 'Chandrakauns (janya Kadaram)' },
+  22: { hindustani: 'Kafi (thaat)', western: 'Dorian' },
+  23: { hindustani: 'Suryakauns (janya Kamala)' },
+  27: { hindustani: 'Nat Bhairav / Kamalamanohari' },
+  28: { hindustani: 'Khamaj (thaat)', western: 'Mixolydian' },
+  29: { hindustani: 'Bilawal (thaat) / Shankarabharanam', western: 'Major' },
+  30: { hindustani: 'Tilang' },
+  45: { hindustani: 'Todi (thaat) / Subhapantuvarali', western: 'Phrygian dominant' },
+  51: { hindustani: 'Purvi (thaat) / Deepak / Kamavardhini' },
+  52: { hindustani: 'Varati (janya Patalambari)' },
+  53: { hindustani: 'Marva (thaat) / Gamanashrama' },
+  59: { hindustani: 'Dharmavati / Ambika / Madhuvanti' },
+  64: { hindustani: 'Sarasvati / Shree Kalyani (janya)' },
+  65: { hindustani: 'Yaman / Kalyani (thaat)', western: 'Lydian' }
+};
+
 // Raga metadata: phrase, composer & year, time of day. Index 1–72.
 const RAGA_INFO = {
   1: { phrase: 'First melakarta; solemn and foundational.', composerYear: 'Traditional; system by Venkatamakhi, c. 1660', timeOfDay: 'Morning' },
@@ -305,6 +402,13 @@ const RAGA_INFO = {
 };
 
 function getRagaInfo(ragaIndex) {
-  var info = RAGA_INFO[ragaIndex];
-  return info || { phrase: 'A melakarta parent scale.', composerYear: 'Melakarta system: Venkatamakhi, c. 1660', timeOfDay: 'Anytime' };
+  var info = RAGA_INFO[ragaIndex] || {};
+  var equiv = typeof RAGA_EQUIVALENTS !== 'undefined' ? RAGA_EQUIVALENTS[ragaIndex] : null;
+  return {
+    phrase: info.phrase || 'A melakarta parent scale.',
+    composerYear: info.composerYear || 'Melakarta system: Venkatamakhi, c. 1660',
+    timeOfDay: info.timeOfDay || 'Anytime',
+    hindustani: equiv && equiv.hindustani ? equiv.hindustani : null,
+    western: equiv && equiv.western ? equiv.western : null
+  };
 }

@@ -80,15 +80,15 @@
               <span class="raga-scale-label">Avarohanam:</span>
               <span class="raga-scale" id="ragaAvarohanam">Ṡ N1 D1 P M1 G1 R1 S</span>
             </div>
-            <div class="raga-scale-row raga-row-carnatic" id="ragaRowCarnatic">
-              <span class="raga-scale-label">Carnatic:</span>
-              <span class="raga-scale" id="ragaScale">S R1 G1 M1 P D1 N1</span>
-            </div>
-            <div class="raga-scale-row raga-row-western" id="ragaRowWestern">
-              <span class="raga-scale-label">Western:</span>
-              <span class="raga-scale raga-scale-western" id="ragaScaleWestern">C Db D F G Ab A</span>
-            </div>
             <p class="raga-phrase" id="ragaPhrase"></p>
+            <div class="raga-meta-row raga-equivalent-row" id="ragaRowHindustani">
+              <span class="raga-meta-label">Hindustani:</span>
+              <span class="raga-meta" id="ragaHindustani"></span>
+            </div>
+            <div class="raga-meta-row raga-equivalent-row" id="ragaRowWestern">
+              <span class="raga-meta-label">Western:</span>
+              <span class="raga-meta" id="ragaWestern"></span>
+            </div>
             <div class="raga-meta-row">
               <span class="raga-meta-label">Origin:</span>
               <span class="raga-meta" id="ragaComposerYear"></span>
@@ -106,10 +106,12 @@
             <button type="button" id="btnNext" aria-label="Next raga">Next →</button>
             <button type="button" id="btnRandom" aria-label="Random raga">Random</button>
           </div>
-          <div class="goto-raga">
-            <label for="gotoInput">Go to (1–72):</label>
-            <input type="number" id="gotoInput" min="1" max="72" value="1">
-            <button type="button" id="btnGoto">Go</button>
+          <div class="raga-select-panel">
+            <br/>
+            <input type="text" id="ragaSearchInput" class="raga-search-input" placeholder="Search ragas..." autocomplete="off" aria-label="Search ragas">
+            <div id="ragaListContainer" class="raga-list-container" aria-label="Raga list">
+              <ul id="ragaList" class="raga-list"></ul>
+            </div>
           </div>
         </div>
       </main>

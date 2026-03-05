@@ -113,15 +113,13 @@ body {
 
 .raga-description {
   flex: 1 1 0;
-  min-height: 0;
-  overflow: auto;
 }
 
 /* ——— Clock-style dials ——— */
 .clock-dials {
   display: flex;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: space-evenly;
   flex-wrap: wrap;
   gap: 0.5rem 0.75rem;
   padding: 0.5rem 0;
@@ -512,7 +510,6 @@ body {
 }
 
 .nav-buttons button,
-.goto-raga button,
 .dial-btn {
   padding: 0.5rem 0.75rem;
   background: #0f3460;
@@ -533,8 +530,7 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.nav-buttons button:hover,
-.goto-raga button:hover {
+.nav-buttons button:hover {
   background: #1a4a7a;
 }
 
@@ -584,25 +580,63 @@ body {
   color: #fff;
 }
 
-.goto-raga {
+/* Raga selection panel: search + list */
+.raga-select-panel {
+  flex: 1 1 200px;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.goto-raga label {
+.raga-search-label {
   font-size: 0.875rem;
+  color: #aaa;
 }
 
-#gotoInput {
-  width: 4rem;
-  padding: 0.35rem;
+.raga-search-input {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
   background: #0f0f1a;
   border: 1px solid #333;
-  border-radius: 4px;
+  border-radius: 6px;
   color: #eee;
   font-size: 0.9rem;
+}
+
+.raga-list-container {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #0f0f1a;
+}
+
+.raga-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.raga-list-item {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.raga-list-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.raga-list-item.selected {
+  background: #1a4a7a;
+  color: #fff;
+}
+
+.raga-equivalent-row {
+  display: none;
 }
 
 /* ——— Piano: white keys in flow, black keys between (50% overlap each side) ——— */
@@ -736,11 +770,24 @@ body {
   font-size: 0.7rem;
   font-weight: 700;
   line-height: 1.2;
-  opacity: 0.95;
   letter-spacing: 0.02em;
   min-width: 0;
   text-align: right;
   flex: 0 1 auto;
+}
+
+.piano-key.highlighted .carnatic,
+.piano-key.highlighted .western,
+.piano-key.playing .carnatic,
+.piano-key.playing .western,
+.piano-key.black .carnatic,
+.piano-key.black .western {
+  color: #fff;
+}
+
+.piano-key.white .carnatic,
+.piano-key.white .western {
+  color: #000;
 }
 
 .piano-key.white.upper-sa {
@@ -766,69 +813,69 @@ body {
   box-shadow: inset 0 0 0 2px currentColor;
 }
 
-/* Piano key colors matching dials: S & P = gold, R–G = green, M = blue, D–N = purple */
+/* Piano key colors: lighter tints for white keys, darker for black keys; labels stay white bold */
 .piano-key.highlighted.scale-s {
-  background: rgba(201, 162, 39, 0.35);
+  background: #e8d88a;
   color: #1a1a2e;
   border-color: #c9a227;
   box-shadow: inset 0 0 0 2px #c9a227;
 }
 
 .piano-key.highlighted.scale-rg {
-  background: rgba(61, 157, 107, 0.35);
+  background: #7bc99e;
   color: #0a1a12;
   border-color: #3d9d6b;
   box-shadow: inset 0 0 0 2px #3d9d6b;
 }
 
 .piano-key.highlighted.scale-m {
-  background: rgba(74, 144, 217, 0.35);
+  background: #7eb8e8;
   color: #0a1629;
   border-color: #4a90d9;
   box-shadow: inset 0 0 0 2px #4a90d9;
 }
 
 .piano-key.highlighted.scale-p {
-  background: rgba(201, 162, 39, 0.35);
+  background: #e8d88a;
   color: #1a1a2e;
   border-color: #c9a227;
   box-shadow: inset 0 0 0 2px #c9a227;
 }
 
 .piano-key.highlighted.scale-dn {
-  background: rgba(155, 89, 182, 0.35);
+  background: #b894d4;
   color: #1a0a22;
   border-color: #9b59b6;
   box-shadow: inset 0 0 0 2px #9b59b6;
 }
 
 .piano-key.black.highlighted.scale-s {
-  background: rgb(201, 162, 39);
-  color: #1a1a2e;
+  background: #8b6914;
+  color: #fff;
   box-shadow: inset 0 0 0 2px #c9a227;
 }
 
 .piano-key.black.highlighted.scale-rg {
-  background: rgb(61, 157, 107);
-  color: #0a1a12;
+  background: #2d7a4d;
+  color: #fff;
   box-shadow: inset 0 0 0 2px #3d9d6b;
 }
 
 .piano-key.black.highlighted.scale-m {
-  background: rgb(74, 144, 217);
-  color: #0a1629;
+  background: #2a5f94;
+  color: #fff;
   box-shadow: inset 0 0 0 2px #4a90d9;
 }
 
 .piano-key.black.highlighted.scale-p {
-  background: rgb(201, 162, 39);
-  color: #1a1a2e;
+  background: #8b6914;
+  color: #fff;
   box-shadow: inset 0 0 0 2px #c9a227;
 }
 
 .piano-key.black.highlighted.scale-dn {
-  background: rgb(155, 89, 182);
-  color: #1a0a22;
+  background: #5c3470;
+  color: #fff;
   box-shadow: inset 0 0 0 2px #9b59b6;
 }
 
@@ -855,31 +902,31 @@ body {
 }
 
 .piano-key.playing.scale-s {
-  background: #ffec99 !important;
+  background: #f5e6a8 !important;
   box-shadow: 0 0 12px 2px #c9a227, inset 0 0 8px rgba(201, 162, 39, 0.5);
   color: #1a1a2e;
 }
 
 .piano-key.playing.scale-rg {
-  background: #8dd9b3 !important;
+  background: #9ee0b8 !important;
   box-shadow: 0 0 12px 2px #3d9d6b, inset 0 0 8px rgba(61, 157, 107, 0.5);
   color: #0a1a12;
 }
 
 .piano-key.playing.scale-m {
-  background: #8fc9f5 !important;
+  background: #a8d4f5 !important;
   box-shadow: 0 0 12px 2px #4a90d9, inset 0 0 8px rgba(74, 144, 217, 0.5);
   color: #0a1629;
 }
 
 .piano-key.playing.scale-p {
-  background: #ffec99 !important;
+  background: #f5e6a8 !important;
   box-shadow: 0 0 12px 2px #c9a227, inset 0 0 8px rgba(201, 162, 39, 0.5);
   color: #1a1a2e;
 }
 
 .piano-key.playing.scale-dn {
-  background: #c9a8e8 !important;
+  background: #d4b8ec !important;
   box-shadow: 0 0 12px 2px #9b59b6, inset 0 0 8px rgba(155, 89, 182, 0.5);
   color: #1a0a22;
 }
@@ -889,33 +936,33 @@ body {
 }
 
 .piano-key.black.playing.scale-s {
-  background: #e8c84d !important;
+  background: #b8921f !important;
   box-shadow: 0 0 10px 2px #c9a227, inset 0 0 6px rgba(201, 162, 39, 0.5);
-  color: #1a1a2e;
+  color: #fff;
 }
 
 .piano-key.black.playing.scale-rg {
-  background: #4dc078 !important;
+  background: #2d8a55 !important;
   box-shadow: 0 0 10px 2px #3d9d6b, inset 0 0 6px rgba(61, 157, 107, 0.5);
-  color: #0a1a12;
+  color: #fff;
 }
 
 .piano-key.black.playing.scale-m {
-  background: #5ba8f0 !important;
+  background: #2d7cc4 !important;
   box-shadow: 0 0 10px 2px #4a90d9, inset 0 0 6px rgba(74, 144, 217, 0.5);
-  color: #0a1629;
+  color: #fff;
 }
 
 .piano-key.black.playing.scale-p {
-  background: #e8c84d !important;
+  background: #b8921f !important;
   box-shadow: 0 0 10px 2px #c9a227, inset 0 0 6px rgba(201, 162, 39, 0.5);
-  color: #1a1a2e;
+  color: #fff;
 }
 
 .piano-key.black.playing.scale-dn {
-  background: #b87dd4 !important;
+  background: #6b3d7d !important;
   box-shadow: 0 0 10px 2px #9b59b6, inset 0 0 6px rgba(155, 89, 182, 0.5);
-  color: #1a0a22;
+  color: #fff;
 }
 
 /* Scale playback */
@@ -970,6 +1017,7 @@ body {
 .play-buttons {
   display: flex;
   gap: 0.5rem;
+  justify-content: space-between;
 }
 
 .play-buttons button {

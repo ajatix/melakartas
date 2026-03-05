@@ -9,19 +9,59 @@
   // ——— DOM refs ———
   const ragaNumberEl = document.getElementById('ragaNumber');
   const ragaNameEl = document.getElementById('ragaName');
-  const ragaScaleEl = document.getElementById('ragaScale');
-  const ragaScaleWesternEl = document.getElementById('ragaScaleWestern');
   const ragaArohanamEl = document.getElementById('ragaArohanam');
   const ragaAvarohanamEl = document.getElementById('ragaAvarohanam');
   const ragaPhraseEl = document.getElementById('ragaPhrase');
   const ragaComposerYearEl = document.getElementById('ragaComposerYear');
   const ragaTimeOfDayEl = document.getElementById('ragaTimeOfDay');
   const ragaChakraEl = document.getElementById('ragaChakra');
+  const ragaHindustaniEl = document.getElementById('ragaHindustani');
+  const ragaWesternEl = document.getElementById('ragaWestern');
   const pianoEl = document.getElementById('piano');
   const bpmInput = document.getElementById('bpmInput');
-  const gotoInput = document.getElementById('gotoInput');
   const reverbInput = document.getElementById('reverbInput');
+  const ragaSearchInput = document.getElementById('ragaSearchInput');
+  const ragaListEl = document.getElementById('ragaList');
   const reverbValueEl = document.getElementById('reverbValue');
+
+  const SETTINGS_KEY = 'melakartaSettings';
+
+  function loadSettings() {
+    try {
+      var raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (bpmInput && s.bpm != null) {
+        var bpm = Math.max(40, Math.min(240, Number(s.bpm) || 80));
+        bpmInput.value = String(bpm);
+      }
+      if (reverbInput && s.reverb != null) {
+        var rev = Math.max(0, Math.min(100, Number(s.reverb) || 0));
+        reverbInput.value = String(rev);
+        if (reverbValueEl) reverbValueEl.textContent = rev + '%';
+      }
+      if (s.pianoNotes === 'western') {
+        var w = document.getElementById('pianoNotesWestern');
+        if (w) w.checked = true;
+      } else {
+        var c = document.getElementById('pianoNotesCarnatic');
+        if (c) c.checked = true;
+      }
+      updatePianoLabels();
+      updateRagaInfo();
+    } catch (e) {}
+  }
+
+  function saveSettings() {
+    try {
+      var s = {
+        bpm: bpmInput ? parseInt(bpmInput.value, 10) || 80 : 80,
+        reverb: reverbInput ? parseInt(reverbInput.value, 10) || 0 : 0,
+        pianoNotes: document.getElementById('pianoNotesWestern') && document.getElementById('pianoNotesWestern').checked ? 'western' : 'carnatic'
+      };
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+    } catch (e) {}
+  }
 
   let reverbConvolver = null;
   let reverbGainNode = null;
@@ -153,7 +193,7 @@
     var keyToWestern = {};
     for (var j = 0; j < keyIndices.length; j++) {
       keyToCarnatic[keyIndices[j]] = scale[j];
-      keyToWestern[keyIndices[j]] = typeof westernNoteForDisplay === 'function' ? westernNoteForDisplay(westernNames[j]) : westernNames[j];
+      keyToWestern[keyIndices[j]] = typeof westernNoteForDisplayHTML === 'function' ? westernNoteForDisplayHTML(westernNames[j]) : westernNames[j];
     }
     keyToCarnatic[12] = 'Ṡ';
     keyToWestern[12] = "C'";
@@ -171,10 +211,10 @@
       var westernSpan = keyEl.querySelector('.western');
       if (inScale) {
         carnaticSpan.textContent = keyToCarnatic[idx] || '';
-        westernSpan.textContent = keyToWestern[idx] || '';
+        westernSpan.innerHTML = keyToWestern[idx] || '';
       } else {
         carnaticSpan.textContent = '';
-        westernSpan.textContent = '';
+        westernSpan.innerHTML = '';
       }
     });
   }
@@ -223,22 +263,39 @@
       var chakraIndex = raga.m * 6 + raga.rg;
       ragaChakraEl.textContent = CHAKRA_NAMES[chakraIndex] != null ? CHAKRA_NAMES[chakraIndex] : '';
     }
+    var useWestern = document.getElementById('pianoNotesWestern') && document.getElementById('pianoNotesWestern').checked;
     if (typeof getArohanamAvarohanam === 'function') {
       var aa = getArohanamAvarohanam(raga.scale);
-      if (ragaArohanamEl) ragaArohanamEl.textContent = aa.arohanam.join(' ') + ' Ṡ';
-      if (ragaAvarohanamEl) ragaAvarohanamEl.textContent = 'Ṡ ' + aa.avarohanam.join(' ');
-    }
-    ragaScaleEl.textContent = raga.scale.join(' ');
-    if (ragaScaleWesternEl && typeof getWesternScaleString === 'function') {
-      ragaScaleWesternEl.textContent = getWesternScaleString(raga.scale);
+      if (ragaArohanamEl) {
+        if (useWestern && typeof getWesternArohanamHTML === 'function')
+          ragaArohanamEl.innerHTML = getWesternArohanamHTML(raga.scale);
+        else
+          ragaArohanamEl.textContent = aa.arohanam.join(' ') + ' Ṡ';
+      }
+      if (ragaAvarohanamEl) {
+        if (useWestern && typeof getWesternAvarohanamHTML === 'function')
+          ragaAvarohanamEl.innerHTML = getWesternAvarohanamHTML(raga.scale);
+        else
+          ragaAvarohanamEl.textContent = 'Ṡ ' + aa.avarohanam.join(' ');
+      }
     }
     var info = typeof getRagaInfo === 'function' ? getRagaInfo(raga.index) : null;
     if (info) {
       if (ragaPhraseEl) ragaPhraseEl.textContent = info.phrase || '';
       if (ragaComposerYearEl) ragaComposerYearEl.textContent = info.composerYear || '';
       if (ragaTimeOfDayEl) ragaTimeOfDayEl.textContent = info.timeOfDay || '';
+      var hindRow = document.getElementById('ragaRowHindustani');
+      var westRow = document.getElementById('ragaRowWestern');
+      if (ragaHindustaniEl && hindRow) {
+        ragaHindustaniEl.textContent = info.hindustani || '';
+        hindRow.style.display = info.hindustani ? 'block' : 'none';
+      }
+      if (ragaWesternEl && westRow) {
+        ragaWesternEl.textContent = info.western || '';
+        westRow.style.display = info.western ? 'block' : 'none';
+      }
     }
-    gotoInput.value = raga.index;
+    updateRagaListSelection(raga.index);
   }
 
   function updateAxisDisplay() {
@@ -321,11 +378,47 @@
     }
   }
 
+  function renderRagaList(filter) {
+    if (!ragaListEl || typeof MELAKARTA === 'undefined') return;
+    var q = (filter || '').trim().toLowerCase();
+    var list = MELAKARTA.filter(function (r) {
+      if (!q) return true;
+      return (r.name && r.name.toLowerCase().indexOf(q) >= 0) ||
+             (String(r.index).indexOf(q) >= 0);
+    });
+    ragaListEl.innerHTML = '';
+    list.forEach(function (r) {
+      var li = document.createElement('li');
+      li.className = 'raga-list-item';
+      li.dataset.ragaIndex = String(r.index);
+      li.textContent = r.index + '. ' + r.name;
+      li.addEventListener('click', function () {
+        setRagaByIndex(r.index);
+      });
+      ragaListEl.appendChild(li);
+    });
+  }
+
+  function updateRagaListSelection(ragaIndex) {
+    if (!ragaListEl) return;
+    ragaListEl.querySelectorAll('.raga-list-item').forEach(function (li) {
+      li.classList.toggle('selected', parseInt(li.dataset.ragaIndex, 10) === ragaIndex);
+    });
+  }
+
   // ——— Init ———
   buildPiano();
   updateRagaInfo();
   updatePianoHighlight();
   updateAxisDisplay();
+  loadSettings();
+  renderRagaList('');
+  if (ragaSearchInput) {
+    ragaSearchInput.addEventListener('input', function () {
+      renderRagaList(ragaSearchInput.value);
+      updateRagaListSelection(getCurrentRaga().index);
+    });
+  }
 
   (function initAudioUnlock() {
     var overlay = document.getElementById('audioUnlockOverlay');
@@ -398,23 +491,38 @@
     setRagaByCoords(rg, m, dn === 0 ? 5 : dn - 1);
   });
 
-  document.getElementById('btnGoto').addEventListener('click', function () {
-    const num = parseInt(gotoInput.value, 10);
-    if (num >= 1 && num <= 72) setRagaByIndex(num);
-  });
-
   if (reverbInput) {
     function updateReverbLabel() {
       if (reverbValueEl) reverbValueEl.textContent = (reverbInput.value || 0) + '%';
     }
     updateReverbLabel();
-    reverbInput.addEventListener('input', updateReverbLabel);
+    reverbInput.addEventListener('input', function () {
+      updateReverbLabel();
+      saveSettings();
+    });
+  }
+
+  if (bpmInput) {
+    bpmInput.addEventListener('change', saveSettings);
+    bpmInput.addEventListener('input', saveSettings);
   }
 
   var pianoNotesWestern = document.getElementById('pianoNotesWestern');
   var pianoNotesCarnatic = document.getElementById('pianoNotesCarnatic');
-  if (pianoNotesWestern) pianoNotesWestern.addEventListener('change', updatePianoLabels);
-  if (pianoNotesCarnatic) pianoNotesCarnatic.addEventListener('change', updatePianoLabels);
+  if (pianoNotesWestern) {
+    pianoNotesWestern.addEventListener('change', function () {
+      updatePianoLabels();
+      updateRagaInfo();
+      saveSettings();
+    });
+  }
+  if (pianoNotesCarnatic) {
+    pianoNotesCarnatic.addEventListener('change', function () {
+      updatePianoLabels();
+      updateRagaInfo();
+      saveSettings();
+    });
+  }
 
   document.getElementById('btnPlayAsc').addEventListener('click', function () {
     ensureAudio();
