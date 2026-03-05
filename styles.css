@@ -788,10 +788,10 @@ body {
   margin-right: 0;
 }
 
-/* Black keys: narrower with gap between, opaque; centered between white keys */
+/* Black keys: narrower with gap between, opaque; centered between white keys (14 whites = 2 octaves) */
 .piano-key.black {
   position: absolute;
-  width: 10%;
+  width: 6%;
   height: 62%;
   top: 0;
   min-width: 0;
@@ -811,12 +811,17 @@ body {
   box-sizing: border-box;
 }
 
-/* Centered between white keys with 2% gap each side: left = boundary - half width - 1% */
-.piano-key.black[data-black-index="1"] { left: 6.5%; }
-.piano-key.black[data-black-index="2"] { left: 19%; }
-.piano-key.black[data-black-index="3"] { left: 44%; }
-.piano-key.black[data-black-index="4"] { left: 56.5%; }
-.piano-key.black[data-black-index="5"] { left: 69%; }
+/* Black keys: narrower; 14 white keys = 2 octaves. left = (pos/14)*100 - 3 */
+.piano-key.black[data-black-index="1"] { left: 4.14%; }
+.piano-key.black[data-black-index="2"] { left: 11.28%; }
+.piano-key.black[data-black-index="3"] { left: 25.57%; }
+.piano-key.black[data-black-index="4"] { left: 32.71%; }
+.piano-key.black[data-black-index="5"] { left: 39.86%; }
+.piano-key.black[data-black-index="6"] { left: 54.14%; }
+.piano-key.black[data-black-index="7"] { left: 61.28%; }
+.piano-key.black[data-black-index="8"] { left: 75.57%; }
+.piano-key.black[data-black-index="9"] { left: 82.71%; }
+.piano-key.black[data-black-index="10"] { left: 89.86%; }
 
 /* Key labels at bottom of key: left = Carnatic, right = Western */
 .piano-key .key-labels {
@@ -858,7 +863,7 @@ body {
 }
 
 .piano-key .carnatic {
-  font-size: 0.8rem;
+  font-size: 0.6rem;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.02em;
@@ -868,13 +873,17 @@ body {
 }
 
 .piano-key .western {
-  font-size: 0.7rem;
+  font-size: 0.55rem;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.02em;
   min-width: 0;
   text-align: right;
   flex: 0 1 auto;
+}
+
+.piano-key.dimmed .key-labels {
+  display: none;
 }
 
 .piano-key.highlighted .carnatic,
@@ -896,17 +905,17 @@ body {
 }
 
 .piano-key.white.upper-sa .carnatic {
-  font-size: 0.95rem;
+  font-size: 0.7rem;
 }
 
 .piano-key.white.upper-sa .western {
-  font-size: 0.8rem;
+  font-size: 0.6rem;
 }
 
 /* Black key labels */
 .piano-key.black .carnatic,
 .piano-key.black .western {
-  font-size: 0.65rem;
+  font-size: 0.5rem;
   font-weight: 700;
 }
 

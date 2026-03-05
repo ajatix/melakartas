@@ -98,6 +98,8 @@
       });
     }
     updateTransposeLabel();
+    updatePianoLabels();
+    updatePianoHighlight();
   }
 
   function getInstrument() {
@@ -308,8 +310,6 @@
 
   function setKeyPlaying(keyIndex, durationMs, octave) {
     var sel = '.piano-key[data-key-index="' + keyIndex + '"]';
-    if (keyIndex === 12)
-      sel = '.piano-key[data-upper-sa="1"]';
     var keyEl = pianoEl.querySelector(sel);
     if (!keyEl) return;
     keyEl.classList.add('playing');
@@ -320,22 +320,21 @@
 
   function buildPiano() {
     pianoEl.innerHTML = '';
-    const whiteOrder = [0, 2, 4, 5, 7, 9, 11, 12];
-    const blackOrder = [1, 3, 6, 8, 10];
-    const blackIndexMap = { 1: 1, 3: 2, 6: 3, 8: 4, 10: 5 };
-    whiteOrder.forEach(function (i) {
+    var whiteOffsets = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23];
+    var blackOffsets = [1, 3, 6, 8, 10, 13, 15, 18, 20, 22];
+    var blackPositionMap = { 1: 1, 3: 2, 6: 3, 8: 4, 10: 5, 13: 6, 15: 7, 18: 8, 20: 9, 22: 10 };
+    whiteOffsets.forEach(function (i) {
       var key = document.createElement('div');
-      key.className = 'piano-key white' + (i === 12 ? ' upper-sa' : '');
+      key.className = 'piano-key white';
       key.dataset.keyIndex = String(i);
-      if (i === 12) key.dataset.upperSa = '1';
       key.innerHTML = '<span class="key-labels"><span class="carnatic"></span><span class="western"></span></span>';
       pianoEl.appendChild(key);
     });
-    blackOrder.forEach(function (i) {
+    blackOffsets.forEach(function (i) {
       var key = document.createElement('div');
       key.className = 'piano-key black';
       key.dataset.keyIndex = String(i);
-      key.dataset.blackIndex = String(blackIndexMap[i]);
+      key.dataset.blackIndex = String(blackPositionMap[i]);
       key.innerHTML = '<span class="key-labels"><span class="carnatic"></span><span class="western"></span></span>';
       pianoEl.appendChild(key);
     });
@@ -349,28 +348,29 @@
     pianoEl.classList.add('piano-labels-western');
 
     var westernSharp = (typeof WESTERN_SHARP !== 'undefined') ? WESTERN_SHARP : ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    var transposedKeyIndices = keyIndices.map(function (k) { return (k + root) % 12; });
 
     var keys = pianoEl.querySelectorAll('.piano-key');
     keys.forEach(function (keyEl) {
-      var upperSaKey = keyEl.dataset.upperSa === '1';
-      var keyIndex = upperSaKey ? 12 : parseInt(keyEl.dataset.keyIndex, 10);
-      var inScale = upperSaKey || keyIndices.indexOf(keyIndex) >= 0;
+      var keyIndex = parseInt(keyEl.dataset.keyIndex, 10);
+      var pitchClass = keyIndex % 12;
+      var octave = 4 + Math.floor(keyIndex / 12);
+      var inTransposedScale = transposedKeyIndices.indexOf(pitchClass) >= 0;
+      var inSaRange = keyIndex >= root && keyIndex <= root + 12;
+      var inScale = inTransposedScale && inSaRange;
       var carnaticSpan = keyEl.querySelector('.carnatic');
       var westernSpan = keyEl.querySelector('.western');
-      if (inScale) {
-        var scaleIdx = upperSaKey ? 7 : keyIndices.indexOf(keyIndex);
-        carnaticSpan.textContent = upperSaKey ? 'Ṡ' : (scale[scaleIdx] || '');
-        var transposedPitch = upperSaKey ? root : (keyIndex + root) % 12;
-        var westernName = westernSharp[transposedPitch];
-        if (upperSaKey) {
-          westernSpan.innerHTML = typeof westernNoteForDisplayHTML === 'function' ? westernNoteForDisplayHTML(westernName + "'") : westernName + "'";
-        } else {
-          westernSpan.innerHTML = typeof westernNoteForDisplayHTML === 'function' ? westernNoteForDisplayHTML(westernName) : westernName;
-        }
-      } else {
+      if (!inScale) {
+        westernSpan.textContent = '';
         carnaticSpan.textContent = '';
-        westernSpan.innerHTML = '';
+        return;
       }
+      var westernName = westernSharp[pitchClass];
+      westernSpan.innerHTML = octave >= 5
+        ? (typeof westernNoteForDisplayHTML === 'function' ? westernNoteForDisplayHTML(westernName + "'") : westernName + "'")
+        : (typeof westernNoteForDisplayHTML === 'function' ? westernNoteForDisplayHTML(westernName) : westernName);
+      var scaleIdx = (keyIndex === 12 + root) ? 7 : transposedKeyIndices.indexOf(pitchClass);
+      carnaticSpan.textContent = scaleIdx === 7 ? 'Ṡ' : (scale[scaleIdx] || '');
     });
   }
 
@@ -378,35 +378,32 @@
     const raga = getCurrentRaga();
     const keyIndices = getKeyIndicesForScale(raga.scale);
     var root = getRootNote();
+    var transposedKeyIndices = keyIndices.map(function (k) { return (k + root) % 12; });
     updatePianoLabels();
     const keys = pianoEl.querySelectorAll('.piano-key');
     keys.forEach((keyEl) => {
-      var upperSaKey = keyEl.dataset.upperSa === '1';
-      var keyIndex = upperSaKey ? 12 : parseInt(keyEl.dataset.keyIndex, 10);
-      var inScale = upperSaKey || keyIndices.indexOf(keyIndex) >= 0;
+      var keyIndex = parseInt(keyEl.dataset.keyIndex, 10);
+      var pitchClass = keyIndex % 12;
+      var octave = 4 + Math.floor(keyIndex / 12);
+      var inTransposedScale = transposedKeyIndices.indexOf(pitchClass) >= 0;
+      var inSaRange = keyIndex >= root && keyIndex <= root + 12;
+      var inScale = inTransposedScale && inSaRange;
       keyEl.classList.remove('scale-s', 'scale-rg', 'scale-m', 'scale-p', 'scale-dn');
       if (inScale) {
-        var scaleIndex = upperSaKey ? 7 : keyIndices.indexOf(keyIndex);
+        var scaleIndex = (keyIndex === 12 + root) ? 7 : transposedKeyIndices.indexOf(pitchClass);
         var scaleClass = scaleIndex === 0 || scaleIndex === 7 ? 'scale-s' : scaleIndex === 1 || scaleIndex === 2 ? 'scale-rg' : scaleIndex === 3 ? 'scale-m' : scaleIndex === 4 ? 'scale-p' : 'scale-dn';
         keyEl.classList.add(scaleClass);
       }
       keyEl.classList.toggle('highlighted', inScale);
       keyEl.classList.toggle('dimmed', !inScale);
-      if (upperSaKey) {
-        keyEl.onclick = function () {
-          ensureAudio();
-          var dur = 0.3;
-          playNote(root, dur, function () { setKeyPlaying(12, dur * 1000, 5); }, 5);
-        };
-      } else {
-        keyEl.onclick = inScale ? function () {
-          ensureAudio();
-          var dur = 0.3;
-          var p = parseInt(keyEl.dataset.keyIndex, 10);
-          var transposedPitch = (p + root) % 12;
-          playNote(transposedPitch, dur, function () { setKeyPlaying(p, dur * 1000, 4); }, 4);
-        } : null;
-      }
+      keyEl.onclick = inScale ? function () {
+        ensureAudio();
+        var dur = 0.3;
+        var p = parseInt(keyEl.dataset.keyIndex, 10);
+        var pitch = p % 12;
+        var oct = 4 + Math.floor(p / 12);
+        playNote(pitch, dur, function () { setKeyPlaying(p, dur * 1000, oct); }, oct);
+      } : null;
     });
   }
 
@@ -494,37 +491,44 @@
     if (typeof getArohanamAvarohanam !== 'function' || typeof getKeyIndicesInOrder !== 'function') return;
     var aa = getArohanamAvarohanam(raga.scale);
     var arohanamKeys = getKeyIndicesInOrder(aa.arohanam);
-    var avarohanamKeys = getKeyIndicesInOrder(aa.avarohanam);
-    var order = ascending
-      ? arohanamKeys.concat([0])
-      : [0].concat(avarohanamKeys);
+    var root = getRootNote();
     const bpm = Math.max(40, Math.min(240, parseInt(bpmInput.value, 10) || 80));
     const noteDuration = 60 / bpm;
     const noteMs = noteDuration * 1000;
-    var root = getRootNote();
 
-    function playNext(idx, prevPitchIndex, prevOctave) {
+    var sequence = [];
+    var i;
+    for (i = 0; i < arohanamKeys.length; i++) {
+      var pitchIndex = (arohanamKeys[i] + root) % 12;
+      sequence.push({ pitchIndex: pitchIndex, octave: 4 });
+    }
+    sequence.push({ pitchIndex: root, octave: 5 });
+    for (i = 1; i < sequence.length; i++) {
+      var prev = sequence[i - 1];
+      var curr = sequence[i];
+      var prevMidi = prev.octave * 12 + prev.pitchIndex;
+      var currMidi = curr.octave * 12 + curr.pitchIndex;
+      if (currMidi <= prevMidi) sequence[i].octave = 5;
+    }
+
+    var order = ascending ? sequence : sequence.slice().reverse();
+
+    function playNext(idx) {
       if (idx >= order.length) return;
-      var keyIdx = order[idx];
-      var isUpperSa = (ascending && idx === order.length - 1) || (!ascending && idx === 0);
-      var pitchIndex = (keyIdx + root) % 12;
-      var octave = isUpperSa ? 5 : 4;
-      if (ascending && prevPitchIndex != null && prevOctave != null) {
-        var prevMidi = prevOctave * 12 + prevPitchIndex;
-        var currMidi = octave * 12 + pitchIndex;
-        if (currMidi <= prevMidi) octave = 5;
-      }
-      var keyToHighlight = isUpperSa ? 12 : keyIdx;
+      var step = order[idx];
+      var pitchIndex = step.pitchIndex;
+      var octave = step.octave;
+      var keyToHighlight = (octave >= 5) ? (12 + pitchIndex) : pitchIndex;
       playNote(pitchIndex, noteDuration * 0.9, function () {
         setKeyPlaying(keyToHighlight, noteMs, octave);
       }, octave);
       scalePlaybackTimeout = setTimeout(function () {
-        playNext(idx + 1, pitchIndex, octave);
+        playNext(idx + 1);
       }, noteMs);
     }
 
     if (scalePlaybackTimeout) clearTimeout(scalePlaybackTimeout);
-    playNext(0, null, null);
+    playNext(0);
   }
 
   function stopScalePlayback() {
@@ -585,8 +589,6 @@
         btn.addEventListener('click', function () {
           setRootNote(idx);
           saveSettings();
-          updatePianoLabels();
-          updatePianoHighlight();
         });
       })(i);
       group.appendChild(btn);
