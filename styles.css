@@ -1179,6 +1179,21 @@ body {
   cursor: not-allowed;
 }
 
+@media (min-width: 901px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 600px;
+    margin: 0;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+}
+
 @media (max-width: 900px) {
   .split {
     flex-direction: column;
