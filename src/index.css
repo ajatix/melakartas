@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 24%;
+    --input: 217 33% 24%;
+    --ring: 217 91% 60%;
+    --radius: 0.5rem;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  min-height: 100vh;
+  touch-action: manipulation;
+}
+
+/* Piano and app-specific styles kept from original */
+.piano-key.dimmed {
+  pointer-events: none;
+}
+
+.piano-key .key-labels {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  width: 100%;
+  min-width: 0;
+  padding: 0.2rem 0.25rem 0.25rem;
+  overflow: hidden;
+  gap: 0.25rem;
+}
+
+.piano-key.dimmed .key-labels {
+  display: none;
+}
+
+/* Scale highlight classes for piano keys */
+.piano-key.highlighted.scale-s {
+  @apply bg-amber-200 text-amber-950;
+}
+.piano-key.highlighted.scale-rg {
+  @apply bg-emerald-300 text-emerald-950;
+}
+.piano-key.highlighted.scale-m {
+  @apply bg-sky-300 text-sky-950;
+}
+.piano-key.highlighted.scale-p {
+  @apply bg-amber-200 text-amber-950;
+}
+.piano-key.highlighted.scale-dn {
+  @apply bg-violet-300 text-violet-950;
+}
+
+.piano-key.black.highlighted.scale-s { @apply bg-amber-800 text-white; }
+.piano-key.black.highlighted.scale-rg { @apply bg-emerald-800 text-white; }
+.piano-key.black.highlighted.scale-m { @apply bg-sky-800 text-white; }
+.piano-key.black.highlighted.scale-p { @apply bg-amber-800 text-white; }
+.piano-key.black.highlighted.scale-dn { @apply bg-violet-800 text-white; }
+
+.piano-key.playing.scale-s {
+  box-shadow: 0 0 12px 2px theme(colors.amber.500);
+}
+.piano-key.playing.scale-rg {
+  box-shadow: 0 0 12px 2px theme(colors.emerald.600);
+}
+.piano-key.playing.scale-m {
+  box-shadow: 0 0 12px 2px theme(colors.sky.600);
+}
+.piano-key.playing.scale-p {
+  box-shadow: 0 0 12px 2px theme(colors.amber.500);
+}
+.piano-key.playing.scale-dn {
+  box-shadow: 0 0 12px 2px theme(colors.violet.600);
+}
